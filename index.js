@@ -125,7 +125,7 @@ router.post("/users", bodyParser.json(), async (req, res) => {
                         bd.user_password,
                         bd.user_role
                     ],
-                    (err, results) => {
+                    (err) => {
                         if (err) throw err;
                         const payload = {
                             user: {
@@ -234,16 +234,16 @@ router.put("/users/:user_id", middleware, bodyParser.json(), async (req, res) =>
 });
 
 // delete user
-router.get("/users/:user_id", middleware, (req, res) => {
+router.delete("/users/:user_id", middleware, (req, res) => {
     if(req.user.user_role === "Admin") {
         const strQry = `
         DELETE FROM users
         WHERE user_id = ?;
         `;
-        db.query(strQry, [req.params.user_id], (err, data, fields) => {
+        db.query(strQry, [req.params.user_id], (err) => {
             if(err) throw err;
             res.json({
-                msg: "Item Deleted",
+                msg: "User removed",
             });
         });
     } else {
@@ -270,7 +270,7 @@ router.get("/verify", (req, res) => {
 
 //====================================================================
 //get cart items from user
-router.get("/users/:id/cart", middleware, (req, res) => {
+router.get("/users/:user_id/cart", middleware, (req, res) => {
     try {
         const strQry = "SELECT cart FROM users WHERE user_id = ?";
         db.query(strQry, [req.user.user_id], (err, results) => {
@@ -295,7 +295,7 @@ router.get("/users/:id/cart", middleware, (req, res) => {
 // add to cart
 router.post("/users/:user_id/cart", middleware, bodyParser.json(), (req, res) => {
     try {
-        let { user_id } = req.body;
+        let {user_id} = req.body;
         const qCart = `
         SELECT cart
         FROM users
@@ -314,9 +314,9 @@ router.post("/users/:user_id/cart", middleware, bodyParser.json(), (req, res) =>
             const strProd =`
             SELECT *
             FROM products
-            WHERE product_id ${product_id};
+            WHERE product_id = ${product_id};
             `;
-            db.query(strProd, async (er, results) => {
+            db.query(strProd, async (err, results) => {
                 if (err) throw err;
 
                 let product = {
@@ -356,7 +356,7 @@ router.delete("/users:user_id/cart/:product_id", middleware, (req, res) => {
     SELECT cart
     FROM users
     WHERE usr_id = ?`;
-    db.query(dCart, req.user.user_id, (err, reults) => {
+    db.query(dCart, req.user.user_id, (err) => {
         if(err) throw err;
         let item = JSON.parse(results[0].cart).filter((x) => {
             return x.product_id != req.params.product_id;
@@ -409,8 +409,8 @@ router.post("/products", middleware, bodyParser.json(), (req, res) => {
             const bd = req.body;
             bd.product_totalamount = bd.product_stock * bd.product_price;
             const strQry = `
-            INSERT INTO products(product_name, product_img, product_desc, product_category, product_price, product_stock, product_totalamount, user_id)
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO products(product_name, product_img, product_desc, product_price, product_stock, product_totalamount, user_id)
+            VALUES(?, ?, ?, ?, ?, ?, ?);
             `;
             db.query(
                 strQry,
@@ -418,7 +418,6 @@ router.post("/products", middleware, bodyParser.json(), (req, res) => {
                     bd.product_name,
                     bd.product_img,
                     bd.product_desc,
-                    bd.product_category,
                     bd.product_price,
                     bd.product_stock,
                     bd.product_totalamount,
@@ -475,15 +474,14 @@ router.get("/products/:product_id", (req, res) => {
 
 // update product
 router.put("/products/:product_id", middleware, bodyParser.json(), async (req, res) => {
-    const { product_name, product_img, product_desc,product_category, product_price, product_stock } = req.body;
+    const { product_name, product_img, product_desc, product_price, product_stock } = req.body;
     let sql = `UPDATE products SET ? WHERE product_id = ${req.params.product_id}`;
     const product = {
         product_name,
         product_img,
         product_desc,
-        product_category,
         product_price,
-        product_stock,
+        product_stock
     };
     db.query(sql, product, (err) => {
         if(err) throw err;

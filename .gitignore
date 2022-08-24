@@ -1,9 +1,2 @@
-config
-middleware
 node_modules
-public
 .env
-index.js
-package-lock.json
-package.json
-procfile
