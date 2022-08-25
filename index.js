@@ -377,7 +377,7 @@ router.delete("/users:id/cart/:id", middleware, (req, res) => {
         db.query(
             strQry,
             [JSON.stringify(item), req.user.id],
-            (err) => {
+            (err, data, fields) => {
                 if (err) throw err;
                 res.json({
                     msg: "item removed from cart",
@@ -394,7 +394,7 @@ router.delete("/users/:id/cart", middleware, (req, res) => {
     FROM users
     WHERE id = ?;
     `;
-    db.query(dCart, req.user.id, () => {
+    db.query(dCart, req.user.id, (err, results) => {
 
     });
     const strQry = `
@@ -402,7 +402,7 @@ router.delete("/users/:id/cart", middleware, (req, res) => {
     SET cart = null
     WHERE id = ?;
     `;
-    db.query(strQry, [req.user.id], (err) => {
+    db.query(strQry, [req.user.id], (err, data, fields) => {
         if(err) throw err;
         res.json({
             msg: "item deleted",
@@ -448,7 +448,7 @@ router.post("/products", middleware, bodyParser.json(), (req, res) => {
 })
 
 // get products
-router.get("/products", (res) => {
+router.get("/products", (req, res) => {
     const strQry =`
     SELECT *
     FROM products;
