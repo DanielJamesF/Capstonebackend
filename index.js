@@ -295,7 +295,7 @@ router.get("/users/:user_id/cart", middleware, (req, res) => {
 // add to cart
 router.post("/users/:user_id/cart", middleware, bodyParser.json(), (req, res) => {
     try {
-        let {user_id} = req.body;
+        let {product_id} = req.body;
         const qCart = `
         SELECT cart
         FROM users
