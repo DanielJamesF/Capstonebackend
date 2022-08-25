@@ -57,7 +57,7 @@ router.get("/users", middleware, (req, res) => {
             status: 200,
             results: results <= 0 ? "Sorry, no product was found" :
             results,
-            test: req.user.user_id,
+            test: req.user.id,
         });
     });
     } else {
@@ -68,14 +68,14 @@ router.get("/users", middleware, (req, res) => {
 });
 
 // single user
-router.get("/users/:user_id", (req, res) => {
+router.get("/users/:id", (req, res) => {
     const strQry = `
     SELECT *
     FROM users
-    WHERE user_id = ?;
+    WHERE id = ?;
     `;
 
-    db.query(strQry, [req.params.user_id], (err, results) => {
+    db.query(strQry, [req.params.id], (err, results) => {
         if (err) throw err;
         res.json(
             {
@@ -180,7 +180,7 @@ router.patch("/users", bodyParser.json(), (req, res) => {
                 if (ismatch === true) {
                     const payload = {
                         user: {
-                            user_id: results[0].user_id,
+                            user_id: results[0].id,
                             user_name: results[0].user_name,
                             user_surname: results[0].user_surname,
                             user_email: results[0].user_email,
@@ -216,9 +216,9 @@ router.patch("/users", bodyParser.json(), (req, res) => {
 });
 
 // update user
-router.put("/users/:user_id", middleware, bodyParser.json(), async (req, res) => {
+router.put("/users/:id", middleware, bodyParser.json(), async (req, res) => {
     const { user_name, user_surname, user_email, user_role } = req.body;
-    let sql = `UPDATE users SET ? WHERE user_id = ${req.params.user_id}`;
+    let sql = `UPDATE users SET ? WHERE user_id = ${req.params.id}`;
     const user = {
         user_name,
         user_surname,
@@ -234,13 +234,13 @@ router.put("/users/:user_id", middleware, bodyParser.json(), async (req, res) =>
 });
 
 // delete user
-router.delete("/users/:user_id", middleware, (req, res) => {
+router.delete("/users/:id", middleware, (req, res) => {
     if(req.user.user_role === "Admin") {
         const strQry = `
         DELETE FROM users
-        WHERE user_id = ?;
+        WHERE id = ?;
         `;
-        db.query(strQry, [req.params.user_id], (err) => {
+        db.query(strQry, [req.params.id], (err) => {
             if(err) throw err;
             res.json({
                 msg: "User removed",
@@ -270,14 +270,14 @@ router.get("/verify", (req, res) => {
 
 //====================================================================
 //get cart items from user
-router.get("/users/:user_id/cart", middleware, (req, res) => {
+router.get("/users/:id/cart", middleware, (req, res) => {
     try {
-        const strQry = "SELECT cart FROM users WHERE user_id = ?";
-        db.query(strQry, [req.user.user_id], (err, results) => {
+        const strQry = "SELECT cart FROM users WHERE id = ?";
+        db.query(strQry, [req.user.id], (err, results) => {
             if(err) throw err;
             (function Check(a, b) {
-                a = parseInt(req.user.user_id);
-                b = parseInt(req.params.user_id);
+                a = parseInt(req.user.id);
+                b = parseInt(req.params.id);
                 if (a === b) {
                     res.send(results[0].cart);
                 } else {
@@ -293,83 +293,80 @@ router.get("/users/:user_id/cart", middleware, (req, res) => {
 });
 
 // add to cart
-router.post("/users/:user_id/cart", middleware, bodyParser.json(), (req, res) => {
+router.post("/users/:id/cart", middleware, bodyParser.json(), (req, res) => {
     try {
-        let {product_id} = req.body;
-        const qCart = `
-        SELECT cart
-        FROM users
-        WHERE user_id = ?;
-        `;
-        db.query(qCart, req.user.user_id, (err, results) => {
-            if(err) throw err;
-            let cart;
-            if(results.length > 0) {
-                if(results[0].cart === null) {
-                    cart = [];
-                } else {
-                    cart = JSON.parse(results[0].cart);
-                }
-            }
-            const strProd =`
-            SELECT *
-            FROM products
-            WHERE product_id = ${product_id};
-            `;
-            db.query(strProd, async (err, results) => {
-                if (err) throw err;
-
-                let product = {
-                    product_id: results[0].product_id,
-                    product_name: results[0].product_name,
-                    product_img: results[0].product_img,
-                    product_desc: results[0].product_desc,
-                    product_category: results[0].product_category,
-                    product_price: results[0].product_price,
-                    product_stock: results[0].product_stock,
-                    product_totalamount: results[0].product_totalamount,
-                    user_id: results[0].user_id,
-                };
-                cart.push(product);
-                const strQry = `
-                UPDATE users
-                SET cart ?
-                WHERE (user_id = ${req.user.user_id})`;
-                db.query(strQry, JSON.stringify(cart),
-                (err) => {
-                    if(err) throw err;
-                    res.json({
-                        results,
-                        msg: "Product added to cart",
-                    });
-                });
+      let { id } = req.body;
+      const qCart = ` SELECT cart
+      FROM users
+      WHERE id = ?;
+      `;
+      db.query(qCart, req.user.id, (err, results) => {
+        if (err) throw err;
+        let cart;
+        if (results.length > 0) {
+          if (results[0].cart === null) {
+            cart = [];
+          } else {
+            cart = JSON.parse(results[0].cart);
+          }
+        }
+        const strProd = `
+      SELECT *
+      FROM products
+      WHERE id = ${id};
+      `;
+        db.query(strProd, async (err, results) => {
+          if (err) throw err;
+  
+          let product = {
+            id: results[0].id,
+            product_name: results[0].product_name,
+            product_img: results[0].product_img,
+            product_desc: results[0].product_desc,
+            product_category: results[0].product_category,
+            product_price: results[0].product_price,
+            user_id: results[0].user_id,
+          };
+  
+          cart.push(product);
+          // res.send(cart)
+          const strQuery = `UPDATE users
+      SET cart = ?
+      WHERE (id = ${req.user.id})`;
+          db.query(strQuery, /*req.user.id */ JSON.stringify(cart), (err) => {
+            if (err) throw err;
+            res.json({
+              results,
+              msg: "Product added to Cart",
             });
+          });
         });
+      });
     } catch (error) {
-        console.log(error)
+      console.log(error.message);
     }
-});
+  });
 
 //delete singel item from cart
-router.delete("/users:user_id/cart/:product_id", middleware, (req, res) => {
+router.delete("/users:id/cart/:id", middleware, (req, res) => {
     const dCart = `
     SELECT cart
     FROM users
-    WHERE usr_id = ?`;
-    db.query(dCart, req.user.user_id, (err) => {
+    WHERE id = ?`;
+    db.query(dCart, req.user.id, (err) => {
         if(err) throw err;
         let item = JSON.parse(results[0].cart).filter((x) => {
-            return x.product_id != req.params.product_id;
+            return x.product_id != req.params.id;
         });
         rmSync.send(item)
         const strQry =`
         UPDATE users
         SET cart = ?
-        WHERE user_id = ?;
+        WHERE id = ?;
         `;
         db.query(
             strQry,
-            [JSON.stringify(item), req.user.user_id],
+            [JSON.stringify(item), req.user.id],
             (err, data, fields) => {
                 if (err) throw err;
                 res.json({
@@ -381,19 +378,19 @@ router.delete("/users:user_id/cart/:product_id", middleware, (req, res) => {
 });
 
 //delete all items from cart
-router.delete("/users/:user_id/cart", middleware, (req, res) => {
+router.delete("/users/:id/cart", middleware, (req, res) => {
     const dCart = `
     SELECT cart
     FROM users
-    WHERE user_id = ?`;
-    db.query(dCart, req.user.user_id, (err, results) => {
+    WHERE id = ?`;
+    db.query(dCart, req.user.id, (err, results) => {
 
     });
     const strQry = `
     UPDATE users
     SET cart = null
-    WHERE (user_id = ?)`;
-    db.query(strQry, [req.user.user_id], (err, data, fields) => {
+    WHERE (id = ?)`;
+    db.query(strQry, [req.user.id], (err, data, fields) => {
         if(err) throw err;
         res.json({
             msg: "item deleted",
@@ -409,8 +406,8 @@ router.post("/products", middleware, bodyParser.json(), (req, res) => {
             const bd = req.body;
             bd.product_totalamount = bd.product_stock * bd.product_price;
             const strQry = `
-            INSERT INTO products(product_name, product_img, product_desc, product_price, product_stock, product_totalamount, user_id)
-            VALUES(?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO products(product_name, product_img, product_desc, product_price, user_id)
+            VALUES(?, ?, ?, ?, ?);
             `;
             db.query(
                 strQry,
@@ -419,9 +416,7 @@ router.post("/products", middleware, bodyParser.json(), (req, res) => {
                     bd.product_img,
                     bd.product_desc,
                     bd.product_price,
-                    bd.product_stock,
-                    bd.product_totalamount,
-                    req.user.user_id,
+                    req.user.id,
                 ],
                 (err) => {
                     if(err) throw err;
@@ -457,13 +452,13 @@ router.get("/products", (req, res) => {
 });
 
 // get product
-router.get("/products/:product_id", (req, res) => {
+router.get("/products/:id", (req, res) => {
     const strQry =`
     SELECT *
     FROM products
-    WHERE product_id = ?;
+    WHERE id = ?;
     `;
-    db.query(strQry, [req.params.product_id], (err, results) => {
+    db.query(strQry, [req.params.id], (err, results) => {
         if(err) throw err;
         res.json({
             status: 200,
@@ -473,15 +468,14 @@ router.get("/products/:product_id", (req, res) => {
 });
 
 // update product
-router.put("/products/:product_id", middleware, bodyParser.json(), async (req, res) => {
+router.put("/products/:id", middleware, bodyParser.json(), async (req, res) => {
     const { product_name, product_img, product_desc, product_price, product_stock } = req.body;
-    let sql = `UPDATE products SET ? WHERE product_id = ${req.params.product_id}`;
+    let sql = `UPDATE products SET ? WHERE id = ${req.params.id}`;
     const product = {
         product_name,
         product_img,
         product_desc,
-        product_price,
-        product_stock
+        product_price
     };
     db.query(sql, product, (err) => {
         if(err) throw err;
@@ -495,7 +489,7 @@ router.put("/products/:product_id", middleware, bodyParser.json(), async (req, r
 router.delete("/products/:id", middleware, (req, res) => {
     const strQry =`
     DELETE FROM products
-    WHERE product_id = ?;
+    WHERE id = ?;
     `;
     db.query(strQry, [req.params.id], (err) => {
         if(err) throw err;
