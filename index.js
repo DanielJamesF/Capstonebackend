@@ -46,7 +46,7 @@ router.get("/", (req, res) => {
 
 // users
 router.get("/users", middleware, (req, res) => {
-    if (req.user.user_role === "Admin") {
+    if (req.user.role === "Admin") {
         const strQry = `
         SELECT *
         FROM users;
@@ -57,7 +57,7 @@ router.get("/users", middleware, (req, res) => {
             status: 200,
             results: results <= 0 ? "Sorry, no product was found" :
             results,
-            test: req.user.id,
+            test: req.user.id
         });
     });
     } else {
@@ -90,49 +90,50 @@ router.get("/users/:id", (req, res) => {
 router.post("/users", bodyParser.json(), async (req, res) => {
     try {
         const bd = req.body;
-        if (bd.user_role === "" || bd.user_role === null) {
-            bd.user_role = "user";
+        if (bd.role === "" || bd.role === null) {
+            bd.role = "user";
         }
-        const emailQ = "SELECT user_email from users WHERE ?";
-        let user_email = {
-            user_email: bd.user_email,
+        const emailQ = `
+        SELECT email
+        FROM users 
+        WHERE ?`;
+        let email = {
+            email: bd.email
         };
         let cart = {
-            cart: null,
+            cart: null
         };
-
-        db.query(emailQ, user_email, async (err, results) => {
+        db.query(emailQ, email, async (err, results) => {
             if (err) throw err;
             if (results.length > 0) {
                 res.json({
                     msg: "Email Exists",
                 });
             } else {
-                bd.user_password = await hash(bd.user_password, 10);
+                bd.password = await hash(bd.password, 10);
                 const strQry =`
-                
-                ALTER TABLE users AUTO_INCREMENT = 1;
-
-                INSERT INTO users(user_name, user_surname, user_email, user_password, user_role)
+                ALTER TABLE users 
+                AUTO_INCREMENT = 1;
+                INSERT INTO users(firstname, lastname, email, password, role)
                 VALUES(?, ?, ?, ?, ?);
                  `;
                  db.query(
                     strQry, 
                     [
-                        bd.user_name,
-                        bd.user_surname,
-                        bd.user_email,
-                        bd.user_password,
-                        bd.user_role
+                        bd.firstname,
+                        bd.lastname,
+                        bd.email,
+                        bd.password,
+                        bd.role
                     ],
                     (err) => {
                         if (err) throw err;
                         const payload = {
                             user: {
-                                user_name: bd.user_name,
-                                user_surname: bd.user_surname,
-                                user_email: bd.user_email,
-                                user_role: bd.user_role,
+                                firstname: bd.firstname,
+                                lastname: bd.lastname,
+                                email: bd.email,
+                                role: bd.role,
                                 cart: cart.cart,
                             },
                         };
@@ -163,11 +164,11 @@ router.post("/users", bodyParser.json(), async (req, res) => {
 //login
 router.patch("/users", bodyParser.json(), (req, res) => {
     try {
-        const { user_email, user_password } = req.body;
+        const { email, password } = req.body;
         const strQry =`
         SELECT *
         FROM users
-        WHERE user_email = '${user_email}';
+        WHERE email = '${email}';
         `;
         db.query(strQry, async (err, results) => {
             if(err) throw err;
@@ -176,16 +177,16 @@ router.patch("/users", bodyParser.json(), (req, res) => {
                     msg: "Email not found",
                 });
             } else {
-                const ismatch = await compare(user_password, results[0].user_password);
+                const ismatch = await compare(password, results[0].password);
                 if (ismatch === true) {
                     const payload = {
                         user: {
-                            user_id: results[0].id,
-                            user_name: results[0].user_name,
-                            user_surname: results[0].user_surname,
-                            user_email: results[0].user_email,
-                            user_role: results[0].user_role,
-                            cart: results[0].cart,
+                            id: results[0].id,
+                            fistname: results[0].firstname,
+                            lastname: results[0].lastname,
+                            email: results[0].email,
+                            role: results[0].role,
+                            cart: results[0].cart
                         },
                     };
                     jwt.sign(
@@ -217,13 +218,16 @@ router.patch("/users", bodyParser.json(), (req, res) => {
 
 // update user
 router.put("/users/:id", middleware, bodyParser.json(), async (req, res) => {
-    const { user_name, user_surname, user_email, user_role } = req.body;
-    let sql = `UPDATE users SET ? WHERE user_id = ${req.params.id}`;
+    const { firstname, lastname, email, role } = req.body;
+    let sql = `
+    UPDATE users
+    SET ?
+    WHERE id = ${req.params.id}`;
     const user = {
-        user_name,
-        user_surname,
-        user_email,
-        user_role,
+        firstname,
+        lastname,
+        email,
+        role
     };
     db.query(sql, user, (err) => {
         if (err) throw err;
@@ -237,7 +241,8 @@ router.put("/users/:id", middleware, bodyParser.json(), async (req, res) => {
 router.delete("/users/:id", middleware, (req, res) => {
     if(req.user.user_role === "Admin") {
         const strQry = `
-        DELETE FROM users
+        DELETE 
+        FROM users
         WHERE id = ?;
         `;
         db.query(strQry, [req.params.id], (err) => {
@@ -272,7 +277,11 @@ router.get("/verify", (req, res) => {
 //get cart items from user
 router.get("/users/:id/cart", middleware, (req, res) => {
     try {
-        const strQry = "SELECT cart FROM users WHERE id = ?";
+        const strQry = `
+        SELECT cart
+        FROM users
+        WHERE id = ?;
+        `;
         db.query(strQry, [req.user.id], (err, results) => {
             if(err) throw err;
             (function Check(a, b) {
@@ -296,7 +305,8 @@ router.get("/users/:id/cart", middleware, (req, res) => {
 router.post("/users/:id/cart", middleware, bodyParser.json(), (req, res) => {
     try {
       let { id } = req.body;
-      const qCart = ` SELECT cart
+      const qCart = `
+      SELECT cart
       FROM users
       WHERE id = ?;
       `;
@@ -311,33 +321,32 @@ router.post("/users/:id/cart", middleware, bodyParser.json(), (req, res) => {
           }
         }
         const strProd = `
-      SELECT *
-      FROM products
-      WHERE id = ${id};
-      `;
+        SELECT *
+        FROM products
+        WHERE id = ${id};
+        `;
         db.query(strProd, async (err, results) => {
           if (err) throw err;
-  
           let product = {
             id: results[0].id,
-            product_name: results[0].product_name,
-            product_img: results[0].product_img,
-            product_desc: results[0].product_desc,
-            product_category: results[0].product_category,
-            product_price: results[0].product_price,
-            user_id: results[0].user_id,
+            title: results[0].title,
+            image: results[0].image,
+            description: results[0].description,
+            price: results[0].price,
+            userid: results[0].userid
           };
   
           cart.push(product);
-          // res.send(cart)
-          const strQuery = `UPDATE users
-      SET cart = ?
-      WHERE (id = ${req.user.id})`;
-          db.query(strQuery, /*req.user.id */ JSON.stringify(cart), (err) => {
+          const strQuery = `
+          UPDATE users
+          SET cart = ?
+          WHERE id = ${req.user.id};
+          `;
+          db.query(strQuery, JSON.stringify(cart), (err) => {
             if (err) throw err;
             res.json({
               results,
-              msg: "Product added to Cart",
+              msg: "Product added to Cart"
             });
           });
         });
@@ -352,11 +361,12 @@ router.delete("/users:id/cart/:id", middleware, (req, res) => {
     const dCart = `
     SELECT cart
     FROM users
-    WHERE id = ?`;
+    WHERE id = ?;
+    `;
     db.query(dCart, req.user.id, (err) => {
         if(err) throw err;
         let item = JSON.parse(results[0].cart).filter((x) => {
-            return x.product_id != req.params.id;
+            return x.id != req.params.id;
         });
         rmSync.send(item)
         const strQry =`
@@ -367,7 +377,7 @@ router.delete("/users:id/cart/:id", middleware, (req, res) => {
         db.query(
             strQry,
             [JSON.stringify(item), req.user.id],
-            (err, data, fields) => {
+            (err) => {
                 if (err) throw err;
                 res.json({
                     msg: "item removed from cart",
@@ -382,15 +392,17 @@ router.delete("/users/:id/cart", middleware, (req, res) => {
     const dCart = `
     SELECT cart
     FROM users
-    WHERE id = ?`;
-    db.query(dCart, req.user.id, (err, results) => {
+    WHERE id = ?;
+    `;
+    db.query(dCart, req.user.id, () => {
 
     });
     const strQry = `
     UPDATE users
     SET cart = null
-    WHERE (id = ?)`;
-    db.query(strQry, [req.user.id], (err, data, fields) => {
+    WHERE id = ?;
+    `;
+    db.query(strQry, [req.user.id], (err) => {
         if(err) throw err;
         res.json({
             msg: "item deleted",
@@ -402,21 +414,20 @@ router.delete("/users/:id/cart", middleware, (req, res) => {
 //create product
 router.post("/products", middleware, bodyParser.json(), (req, res) => {
     try {
-        if(req.user.user_role === "Admin") {
+        if(req.user.role === "Admin") {
             const bd = req.body;
-            bd.product_totalamount = bd.product_stock * bd.product_price;
             const strQry = `
-            INSERT INTO products(product_name, product_img, product_desc, product_price, user_id)
+            INSERT INTO products(title, image, description, price, userid)
             VALUES(?, ?, ?, ?, ?);
             `;
             db.query(
                 strQry,
                 [
-                    bd.product_name,
-                    bd.product_img,
-                    bd.product_desc,
-                    bd.product_price,
-                    req.user.id,
+                    bd.title,
+                    bd.image,
+                    bd.description,
+                    bd.price,
+                    req.user.id
                 ],
                 (err) => {
                     if(err) throw err;
@@ -437,7 +448,7 @@ router.post("/products", middleware, bodyParser.json(), (req, res) => {
 })
 
 // get products
-router.get("/products", (req, res) => {
+router.get("/products", (res) => {
     const strQry =`
     SELECT *
     FROM products;
@@ -469,13 +480,13 @@ router.get("/products/:id", (req, res) => {
 
 // update product
 router.put("/products/:id", middleware, bodyParser.json(), async (req, res) => {
-    const { product_name, product_img, product_desc, product_price, product_stock } = req.body;
+    const { title, image, description, price } = req.body;
     let sql = `UPDATE products SET ? WHERE id = ${req.params.id}`;
     const product = {
-        product_name,
-        product_img,
-        product_desc,
-        product_price
+        title,
+        image,
+        description,
+        price
     };
     db.query(sql, product, (err) => {
         if(err) throw err;
