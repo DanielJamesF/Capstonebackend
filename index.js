@@ -282,7 +282,7 @@ router.get("/verify", (req, res) => {
 });
 
 //====================================================================
-//get cart items from user
+// show items in user cart
 router.get("/users/:id/cart", middleware, (req, res) => {
     try {
         const strQry = `
@@ -309,7 +309,7 @@ router.get("/users/:id/cart", middleware, (req, res) => {
     }
 });
 
-// add to cart
+// add item to cart
 router.post("/users/:id/cart", middleware, bodyParser.json(), (req, res) => {
     try {
         let {
@@ -366,7 +366,7 @@ router.post("/users/:id/cart", middleware, bodyParser.json(), (req, res) => {
     }
 });
 
-//delete singel item from cart
+//delete item from cart
 router.delete("/users/:id/cart/:id", middleware, (req, res) => {
     const dCart = `
     SELECT cart
@@ -396,7 +396,7 @@ router.delete("/users/:id/cart/:id", middleware, (req, res) => {
     });
 });
 
-//delete all items from cart
+// clear cart
 router.delete("/users/:id/cart", middleware, (req, res) => {
     const dCart = `
     SELECT cart
