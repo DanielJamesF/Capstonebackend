@@ -186,7 +186,7 @@ router.patch("/users", bodyParser.json(), (req, res) => {
                     const payload = {
                         user: {
                             id: results[0].id,
-                            fistname: results[0].firstname,
+                            firstname: results[0].firstname,
                             lastname: results[0].lastname,
                             email: results[0].email,
                             role: results[0].role,
