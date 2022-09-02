@@ -6,14 +6,9 @@ const path = require("path");
 const db = require("./config/dbconn");
 const jwt = require("jsonwebtoken");
 const middleware = require("./middleware/auth");
-const {
-    compare,
-    hash
-} = require("bcrypt");
+const {compare,hash} = require("bcrypt");
 const e = require("express");
-const {
-    rmSync
-} = require("fs");
+const {rmSync} = require("fs");
 
 const app = express();
 
