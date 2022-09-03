@@ -46,7 +46,7 @@ router.get("/", (req, res) => {
 
 // users
 router.get("/users", middleware, (req, res) => {
-    if (req.user.role === "Admin") {
+    if (req.user.role === "admin") {
         const strQry = `
         SELECT *
         FROM users;
@@ -418,7 +418,7 @@ router.delete("/users/:id/cart", middleware, (req, res) => {
 //create product
 router.post("/products", middleware, bodyParser.json(), (req, res) => {
     try {
-        if (req.user.role === "Admin") {
+        if (req.user.role === "admin") {
             const bd = req.body;
             const strQry = `
             INSERT INTO products(title, image, description, price, userid)
