@@ -242,7 +242,7 @@ router.put("/users/:id", middleware, bodyParser.json(), async (req, res) => {
 
 // delete user
 router.delete("/users/:id", middleware, (req, res) => {
-    if (req.user.user_role === "Admin") {
+    if (req.user.role === "admin") {
         const strQry = `
         DELETE 
         FROM users
