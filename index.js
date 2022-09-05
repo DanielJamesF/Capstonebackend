@@ -220,6 +220,7 @@ router.put("/users/:id", middleware, bodyParser.json(), async (req, res) => {
         firstname,
         lastname,
         email,
+        password,
         role
     } = req.body;
     let sql = `
@@ -230,6 +231,7 @@ router.put("/users/:id", middleware, bodyParser.json(), async (req, res) => {
         firstname,
         lastname,
         email,
+        password,
         role
     };
     db.query(sql, user, (err) => {
