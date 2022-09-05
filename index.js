@@ -248,7 +248,7 @@ router.delete("/users/:id", middleware, (req, res) => {
         FROM users
         WHERE id = ?;
         `;
-        db.query(strQry, [req.params.id], (err) => {
+        db.query(strQry, (req.params.id), (err) => {
             if (err) throw err;
             res.json({
                 msg: "User removed",
