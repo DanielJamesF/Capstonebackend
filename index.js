@@ -400,28 +400,31 @@ router.delete("/users/:id/cart/:id", middleware, (req, res) => {
 
 // clear cart
 router.delete("/users/:id/cart", middleware, (req, res) => {
-    const strQry = `
-    UPDATE users
-    SET cart = null
-    WHERE (id = ?);
-    `;
-    db.query(strQry, [req.user.id], (err, data, fields) => {
-        if (err) throw err;
-        res.json({
-            msg: "items deleted",
+    try {
+        const dCart = `
+        SELECT cart
+        FROM users
+        WHERE id = ?;
+        `;
+        db.query(dCart, req.user.id, (err, results) => {
+            if (err) throw err;
+            let
+            const strQry = `
+            UPDATE users
+            SET cart = null
+            WHERE (id = ?);
+            `;
+            db.query(strQry, [req.user.id], (err, data, fields) => {
+                if (err) throw err;
+                res.json({
+                    msg: "items deleted",
+                });
+            });
         });
-    });
-    const dCart = `
-    SELECT cart
-    FROM users
-    WHERE id = ?;
-    `;
-    db.query(dCart, req.user.id, (err, results) => {
-        if (err) throw err;
-        res.json({
-            msg: "cart is empty",
-        })
-    });
+    } catch (error) {
+        console.log(error.message);
+        throw error
+    }
 });
 
 //====================================================================
