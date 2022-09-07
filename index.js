@@ -6,14 +6,9 @@ const path = require("path");
 const db = require("./config/dbconn");
 const jwt = require("jsonwebtoken");
 const middleware = require("./middleware/auth");
-const {
-    compare,
-    hash
-} = require("bcrypt");
+const {compare,hash} = require("bcrypt");
 const e = require("express");
-const {
-    rmSync
-} = require("fs");
+const {rmSync} = require("fs");
 
 const app = express();
 
@@ -397,26 +392,26 @@ router.delete("/users/:id/cart/:id", middleware, (req, res) => {
         );
     });
 });
+
 // clear cart
 router.delete("/users/:id/cart", middleware, (req, res) => {
+    // const dCart = `
+    // SELECT cart
+    // FROM users
+    // WHERE id = ?;
+    // `;
+    // db.query(dCart, req.user.id, (err, results) => {
+
+    // });
     const strQry = `
-        UPDATE users
-        SET cart = null
-        WHERE (id = ?);
-        `;
+    UPDATE users
+    SET cart = null
+    WHERE (id = ?);
+    `;
     db.query(strQry, [req.user.id], (err, data, fields) => {
         if (err) throw err;
         res.json({
             msg: "items deleted",
-        });
-        const dCart = `
-        SELECT cart
-        FROM users
-        WHERE id = ?;
-        `;
-        db.query(dCart, req.user.id, (err, results) => {
-            if (err) throw err
-            res.send(results[0].cart)
         });
     });
 });
