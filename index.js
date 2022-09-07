@@ -409,15 +409,15 @@ router.delete("/users/:id/cart", middleware, (req, res) => {
         res.json({
             msg: "items deleted",
         });
-        // const dCart = `
-        // SELECT cart
-        // FROM users
-        // WHERE id = ?;
-        // `;
-        // db.query(dCart, req.user.id, (err, results) => {
-        //     if (err) throw err
-        //     res.send(results[0].cart)
-        // });
+        const dCart = `
+        SELECT cart
+        FROM users
+        WHERE id = ?;
+        `;
+        db.query(dCart, req.user.id, (err, results) => {
+            if (err) throw err
+            res.send(results[0].cart)
+        });
     });
 });
 
